@@ -33,7 +33,7 @@ Specs live under `~/.kiro/<repo-name>/<feature-name>/` (outside the repository).
 Both read `~/.claude/agents/` and `~/.claude/commands/`.
 
 ```bash
-git clone https://github.com/instacart/t-kiro-agent.git
+git clone https://github.com/Tianyang-human/t-kiro-agent.git
 cd t-kiro-agent
 ./install.sh
 ```
