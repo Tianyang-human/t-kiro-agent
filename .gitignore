@@ -3,3 +3,8 @@
 .vscode/
 *.swp
 *~
+
+# Spec artifacts produced by the spec-driven workflow. Kept out of history
+# by convention — they are planning aids for the developer, not part of the
+# codebase. See README.md ("Specs live under ~/.kiro/...").
+docs/
