@@ -17,14 +17,27 @@ Each stage produces a durable markdown artifact outside the repository (under `~
 
 ## Workflow
 
+The recommended entry point is the unified router:
+
 ```
-/requirements <feature>   →  requirements-agent  →  ~/.kiro/<repo>/<feature>/requirements.md  →  APPROVE
-/design <feature>         →  design-agent        →  ~/.kiro/<repo>/<feature>/design.md        →  APPROVE
-/tasks <feature>          →  tasks-agent         →  ~/.kiro/<repo>/<feature>/tasks.md         →  APPROVE
-/execute <feature>        →  execution-agent     →  implements one main task at a time
+/kiro <feature>                →  routes to the right phase based on `.status`
+/kiro <feature> --redo <phase> →  re-run a previously approved phase
 ```
 
+Under the hood, `/kiro` dispatches to one of four phase agents:
+
+```
+requirements  →  requirements-agent  →  ~/.kiro/<repo>/<feature>/requirements.md  →  APPROVE
+design        →  design-agent        →  ~/.kiro/<repo>/<feature>/design.md        →  APPROVE
+tasks         →  tasks-agent         →  ~/.kiro/<repo>/<feature>/tasks.md         →  APPROVE
+execute       →  execution-agent     →  implements one main task at a time
+```
+
+Each phase is also exposed as a standalone slash command (`/requirements`, `/design`, `/tasks`, `/execute`) if you prefer to drive phases manually.
+
 Specs live under `~/.kiro/<repo-name>/<feature-name>/` (outside the repository). They are intentionally **not** committed to the repo — they are for the developer's benefit during feature planning, not part of the codebase history.
+
+A small `.status` file in the same directory tracks the current phase and approval state, so re-running `/kiro <feature>` resumes mid-flight rather than starting over.
 
 ## Install
 
@@ -42,24 +55,26 @@ Then fully restart Claude Code or reload the Cursor window (`Cmd+Shift+P` → `D
 
 ### Manual install
 
-Copy the four agent files to `~/.claude/agents/` and the four command files to `~/.claude/commands/`.
+Copy the four agent files to `~/.claude/agents/` and the five command files (`requirements.md`, `design.md`, `tasks.md`, `execute.md`, `kiro.md`) to `~/.claude/commands/`.
 
 ## Usage
 
 From within any git repository:
 
 ```
-/requirements <feature-name>
-# ... describe the feature, answer clarifying questions, review, type APPROVE
+/kiro <feature-name>
+# Routes to the right phase based on ~/.kiro/<repo>/<feature>/.status:
+#   - no .status        → starts requirements
+#   - draft_written     → re-displays the existing draft and re-prompts for APPROVE
+#   - approved          → confirms before advancing to the next phase
+#   - approved + edits  → warns about staleness and re-prompts for APPROVE
+```
 
-/design <feature-name>
-# ... review the technical design, alternatives, mermaid diagrams, type APPROVE
+To re-run a previously approved phase:
 
-/tasks <feature-name>
-# ... review the hierarchical task breakdown, type APPROVE
-
-/execute <feature-name>
-# ... implement one main task at a time with test + compile verification
+```
+/kiro <feature-name> --redo <phase>
+# <phase> is one of: requirements | design | tasks | execute
 ```
 
 `<feature-name>` is a short slug (e.g., `user-auth`, `bulk-export`). The same slug is used across all four stages.
@@ -80,13 +95,30 @@ From within any git repository:
 - Each stage requires `APPROVE` before progressing
 - `execution-agent` runs package-level tests and compile after every main task; failing verification blocks completion
 
+### Workspace conventions
+
+If `AGENT.md` and/or `CLAUDE.md` exist in the repository, every agent reads them at startup and binds the resulting coding-style and testing rules to its output. When both files exist and disagree, `CLAUDE.md` wins. If neither exists, agents proceed silently.
+
+### Superpower skills
+
+Agents auto-invoke relevant [`obra/superpowers`](https://github.com/obra/superpowers) skills where they add value:
+
+| Agent | Skills |
+|---|---|
+| `requirements-agent` | `brainstorming`, `writing-plans` |
+| `design-agent` | `brainstorming` |
+| `tasks-agent` | `writing-plans` |
+| `execution-agent` | `test-driven-development`, `verification-before-completion`, `systematic-debugging`, `finishing-a-development-branch` |
+
+If the `obra/superpowers` plugin isn't installed, agents log an inline note and continue without the skill.
+
 ## Uninstall
 
 ```bash
 ./uninstall.sh
 ```
 
-Removes the four agents and four commands from `~/.claude/`. Your `~/.kiro/` specs are preserved.
+Removes the four agents and five commands from `~/.claude/`. Your `~/.kiro/` specs are preserved.
 
 ## Customizing for your own workflow
 
