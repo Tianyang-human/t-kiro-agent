@@ -5,7 +5,7 @@ DEST_AGENTS="${HOME}/.claude/agents"
 DEST_COMMANDS="${HOME}/.claude/commands"
 
 AGENTS=(requirements-agent.md design-agent.md tasks-agent.md execution-agent.md)
-COMMANDS=(requirements.md design.md tasks.md execute.md)
+COMMANDS=(requirements.md design.md tasks.md execute.md kiro.md)
 
 echo "Uninstalling t-kiro-agent..."
 
